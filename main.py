@@ -7,7 +7,7 @@ import asyncio
 import json
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import List, Dict, Optional
 
@@ -84,31 +84,55 @@ async def process_repo(repo: str, db: Database, github_monitor: GitHubMonitor,
     try:
         logger.info(f"🔍 检查仓库 {repo} 的新提交...")
         
-        # 获取最后检查时间
+        # 获取最后检查时间和SHA
         last_check = db.get_last_check_time(repo)
+        last_commit_sha = db.get_last_commit_sha(repo)
         
-        # 获取新提交
-        commits = await github_monitor.get_new_commits(repo, last_check)
+        # 获取新提交（使用SHA过滤避免重复）
+        commits = await github_monitor.get_new_commits(repo, last_check, last_commit_sha)
         
         if not commits:
             logger.info(f"✅ {repo} 没有新提交")
             return
         
-        logger.info(f"📝 发现 {len(commits)} 个新提交")
+        logger.info(f"📝 发现 {len(commits)} 个新提交:")
+        for commit in commits:
+            logger.info(f"  - {commit['sha']}: {commit['message'][:50]}{'...' if len(commit['message']) > 50 else ''}")
         
         # 生成提交总结
-        summary = await ai_summarizer.summarize_commits(repo, commits)
+        try:
+            summary = await ai_summarizer.summarize_commits(repo, commits)
+            logger.info(f"✅ 生成提交总结完成")
+        except Exception as e:
+            logger.error(f"❌ 生成提交总结失败: {e}")
+            # 如果AI总结失败，发送简单的提交列表
+            summary = f"🔄 仓库 {repo} 有 {len(commits)} 个新提交:\n\n"
+            for commit in commits[:5]:  # 最多显示5个
+                summary += f"• {commit['sha']}: {commit['message'][:100]}{'...' if len(commit['message']) > 100 else ''}\n"
+                summary += f"  👤 {commit['author']} | 🔗 {commit['url']}\n\n"
+            if len(commits) > 5:
+                summary += f"... 还有 {len(commits) - 5} 个提交"
         
         # 发送到QQ群
-        await qq_bot.send_message(summary)
-        
-        # 更新最后检查时间
-        db.update_last_check_time(repo, datetime.now())
-        
-        logger.info(f"✅ {repo} 的提交总结已发送到QQ群")
+        try:
+            success = await qq_bot.send_message(summary)
+            if success:
+                logger.info(f"✅ {repo} 的提交总结已发送到QQ群")
+                
+                # 只有成功发送后才更新数据库
+                latest_commit = commits[-1]  # 最新的提交在最后
+                db.update_last_check_time(
+                    repo, 
+                    datetime.now(timezone.utc), 
+                    latest_commit['full_sha']
+                )
+            else:
+                logger.error(f"❌ 发送到QQ群失败，不更新检查时间")
+        except Exception as e:
+            logger.error(f"❌ 发送QQ消息时出错: {e}")
         
     except Exception as e:
-        logger.error(f"❌ 处理仓库 {repo} 时出错: {e}")
+        logger.error(f"❌ 处理仓库 {repo} 时出错: {e}", exc_info=True)
 
 
 @cli.command()
