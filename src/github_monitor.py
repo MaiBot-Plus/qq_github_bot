@@ -3,7 +3,6 @@ GitHub监控模块 - 获取仓库提交信息
 """
 
 import aiohttp
-import asyncio
 from datetime import datetime, timezone
 from typing import List, Dict, Optional
 from loguru import logger

@@ -5,14 +5,11 @@ GitHub QQ Bot - 监控GitHub仓库提交并发送总结到QQ群
 
 import asyncio
 import json
-import os
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Dict, Optional
 
 import click
-import requests
 from loguru import logger
 from dotenv import load_dotenv
 
@@ -52,7 +49,7 @@ def run(config):
         )
         qq_bot = QQBot(config_obj.qq_bot_url, config_obj.qq_group_id)
         
-        logger.info(f"🚀 启动GitHub QQ Bot监控服务...")
+        logger.info("🚀 启动GitHub QQ Bot监控服务...")
         logger.info(f"监控仓库: {', '.join(config_obj.github_repos)}")
         logger.info(f"检查间隔: {config_obj.check_interval}秒")
         
@@ -102,7 +99,7 @@ async def process_repo(repo: str, db: Database, github_monitor: GitHubMonitor,
         # 生成提交总结
         try:
             summary = await ai_summarizer.summarize_commits(repo, commits)
-            logger.info(f"✅ 生成提交总结完成")
+            logger.info("✅ 生成提交总结完成")
         except Exception as e:
             logger.error(f"❌ 生成提交总结失败: {e}")
             # 如果AI总结失败，发送简单的提交列表
@@ -127,7 +124,7 @@ async def process_repo(repo: str, db: Database, github_monitor: GitHubMonitor,
                     latest_commit['full_sha']
                 )
             else:
-                logger.error(f"❌ 发送到QQ群失败，不更新检查时间")
+                logger.error("❌ 发送到QQ群失败，不更新检查时间")
         except Exception as e:
             logger.error(f"❌ 发送QQ消息时出错: {e}")
         

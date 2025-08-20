@@ -25,7 +25,7 @@ def check_dependencies():
             print(f"✅ {package} 已安装")
     
     if missing_packages:
-        print(f"\n❌ 缺少以下依赖包:")
+        print("\n❌ 缺少以下依赖包:")
         for package in missing_packages:
             print(f"   - {package}")
         print(f"\n请运行: pip install {' '.join(missing_packages)}")

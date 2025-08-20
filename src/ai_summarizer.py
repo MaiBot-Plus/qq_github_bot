@@ -80,7 +80,7 @@ class AISummarizer:
                 files_info = []
                 for file in commit['files'][:5]:  # 最多显示5个文件
                     files_info.append(f"  - {file['filename']} ({file['status']})")
-                commit_info += f"变更文件:\n" + "\n".join(files_info)
+                commit_info += "变更文件:\n" + "\n".join(files_info)
                 
                 if len(commit['files']) > 5:
                     commit_info += f"\n  ... 还有 {len(commit['files']) - 5} 个文件"

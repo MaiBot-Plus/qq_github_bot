@@ -4,9 +4,7 @@ GitHub QQ Bot 调试工具 - 用于诊断提交识别问题
 """
 
 import asyncio
-import json
 from datetime import datetime, timezone, timedelta
-from pathlib import Path
 
 from src.github_monitor import GitHubMonitor
 from src.database import Database
@@ -36,7 +34,7 @@ async def diagnose_repo(config_path: str, repo: str):
     last_sha = db.get_last_commit_sha(repo)
     
     # 2. 测试GitHub API连接
-    print(f"\n🔗 测试GitHub API连接:")
+    print("\n🔗 测试GitHub API连接:")
     recent_commits = await github_monitor.get_recent_commits(repo, limit=3)
     if recent_commits:
         print(f"  ✅ 成功获取到 {len(recent_commits)} 个最近提交")
@@ -48,7 +46,7 @@ async def diagnose_repo(config_path: str, repo: str):
         return
     
     # 3. 检查新提交检测
-    print(f"\n🆕 检查新提交检测:")
+    print("\n🆕 检查新提交检测:")
     new_commits = await github_monitor.get_new_commits(repo, last_check, last_sha)
     if new_commits:
         print(f"  📝 发现 {len(new_commits)} 个新提交:")
@@ -60,12 +58,12 @@ async def diagnose_repo(config_path: str, repo: str):
                 for file in commit['files'][:3]:  # 只显示前3个文件
                     print(f"        - {file['filename']} ({file['status']})")
             else:
-                print(f"      📁 文件信息未获取")
+                print("      📁 文件信息未获取")
     else:
         print("  ✅ 没有新提交")
     
     # 4. 时间比较分析
-    print(f"\n⏰ 时间分析:")
+    print("\n⏰ 时间分析:")
     if last_check:
         print(f"  最后检查时间: {last_check}")
         print(f"  当前UTC时间: {datetime.now(timezone.utc)}")
@@ -79,7 +77,7 @@ async def diagnose_repo(config_path: str, repo: str):
         print("  这是首次检查，没有历史记录")
     
     # 5. 建议的修复措施
-    print(f"\n💡 建议:")
+    print("\n💡 建议:")
     if not new_commits and recent_commits:
         print("  1. 如果您刚才提交了代码但机器人没检测到，可能是:")
         print("     - 提交时间早于最后检查时间")

@@ -3,7 +3,6 @@ QQ机器人模块 - 发送消息到QQ群
 """
 
 import aiohttp
-import json
 from typing import Optional
 from loguru import logger
 
